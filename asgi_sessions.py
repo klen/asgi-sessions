@@ -76,7 +76,7 @@ class SessionMiddleware(BaseMiddeware):
         if secure:
             self.cookie_params['secure'] = secure
 
-    async def process(self, scope, receive, send):
+    async def __process__(self, scope, receive, send):
         """Load/save the sessions."""
 
         # Support asgi_tools.RequestMiddleware
@@ -99,7 +99,7 @@ class SessionMiddleware(BaseMiddeware):
 
             return send(message)
 
-        # ASGI-Tools internal middleware
+        # Support ASGI-Tools Responses
         response = await self.app(scope, receive, send_wrapper)
         if response and isinstance(response, Response) and not session.pure:
             response._headers['Set-Cookie'] = session.cookie(
