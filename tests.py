@@ -22,6 +22,9 @@ def test_session():
     del session['user']
     assert not session.pure
 
+    session = Session('SECRET', 'invalid', uid=12)
+    assert session
+
 
 async def test_base():
     from asgi_sessions import SessionMiddleware

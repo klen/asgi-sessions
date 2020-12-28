@@ -19,10 +19,9 @@ class Session(dict):
 
         if token:
             try:
-                payload = jwt.decode(token, key=self.secret_key, algorithms=['HS256'])
-                self.update(payload)
+                self.update(jwt.decode(token, key=self.secret_key, algorithms=['HS256']))
             except jwt.DecodeError:
-                return {}
+                pass
 
         if payload:
             self.update(payload)
