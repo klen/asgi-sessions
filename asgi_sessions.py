@@ -1,3 +1,5 @@
+"""Support cookie-encrypted sessions for ASGI applications."""
+
 __version__ = "0.1.0"
 __license__ = "MIT"
 
@@ -9,13 +11,16 @@ import jwt
 
 
 class Session(dict):
+    """Keep/update sessions data."""
 
     def __init__(self, secret_key, token=None, **payload):
+        """Initialize the container."""
         self.secret_key = secret_key
 
         if token:
             try:
-                self.update(jwt.decode(token, key=self.secret_key))
+                payload = jwt.decode(token, key=self.secret_key, algorithms=['HS256'])
+                self.update(payload)
             except jwt.DecodeError:
                 return {}
 
@@ -24,24 +29,32 @@ class Session(dict):
 
         self.pure = True
 
+    def __setitem__(self, name, value):
+        """Store the value and check that the session is pure."""
+        self.pure = self.get(name) == value
+        dict.__setitem__(self, name, value)
+
+    def __delitem__(self, name):
+        """Delete the value and check that the session is pure."""
+        self.pure = name not in self
+        dict.__delitem__(self, name)
+
     def encode(self, **kwargs):
-        return jwt.encode(self, key=self.secret_key).decode()
+        """Encode the session's data."""
+        token = jwt.encode(self, key=self.secret_key, algorithm='HS256')
+        # Support JWT<2 (Remove me after 2022-01-01)
+        if isinstance(token, bytes):
+            token = token.decode()
+        return token
 
     def cookie(self, cookie_name, cookie_params):
+        """Render the data as a cookie string."""
         morsel = cookies.Morsel()
         value = self.encode()
         morsel.set(cookie_name, value, value)
         for k in cookie_params:
             morsel[k] = cookie_params[k]
         return morsel.OutputString()
-
-    def __setitem__(self, name, value):
-        self.pure = self.get(name) == value
-        dict.__setitem__(self, name, value)
-
-    def __delitem__(self, name):
-        self.pure = name not in self
-        dict.__delitem__(self, name)
 
     def clear(self):
         self.pure = not self
@@ -78,7 +91,6 @@ class SessionMiddleware(BaseMiddeware):
 
     async def __process__(self, scope, receive, send):
         """Load/save the sessions."""
-
         # Support asgi_tools.RequestMiddleware
         if isinstance(scope, Request):
             request = scope
