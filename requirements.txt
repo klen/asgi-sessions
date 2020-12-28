@@ -1,2 +1,2 @@
-asgi-tools      >= 0.0.20
+asgi-tools      >= 0.1.6
 PyJWT           >= 1.7.1

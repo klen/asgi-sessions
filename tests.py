@@ -56,10 +56,10 @@ async def test_base():
 
 
 async def test_asgi_tools_external():
-    from asgi_tools import AppMiddleware
+    from asgi_tools import App
     from asgi_sessions import SessionMiddleware
 
-    app = SessionMiddleware(AppMiddleware(), secret_key='SESSION-SECRET')
+    app = App()
 
     @app.route('/')
     async def index(request):
@@ -78,6 +78,8 @@ async def test_asgi_tools_external():
         session = request['session']
         session.pop('user')
         return "Done"
+
+    app = SessionMiddleware(app, secret_key='SESSION-SECRET')
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         res = await client.get('/')
@@ -98,28 +100,29 @@ async def test_asgi_tools_external():
 
 
 async def test_asgi_tools_internal():
-    from asgi_tools import AppMiddleware, HTMLResponse
+    from asgi_tools import App
     from asgi_sessions import SessionMiddleware
 
-    app = AppMiddleware(None, SessionMiddleware, secret_key='SESSION-SECRET')
+    app = App()
+    app.middleware(SessionMiddleware.setup(secret_key='SESSION-SECRET'))
 
     @app.route('/')
     async def index(request):
         session = request['session']
         user = session.get('user', 'Anonymous')
-        return HTMLResponse('Hello %s' % user.title())
+        return 'Hello %s' % user.title()
 
     @app.route('/login/{user}')
     async def login(request, user='anonymous'):
         session = request['session']
         session['user'] = user
-        return HTMLResponse('Done')
+        return 'Done'
 
     @app.route('/logout')
     async def logout(request, *args):
         session = request['session']
         del session['user']
-        return HTMLResponse('Done')
+        return 'Done'
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         res = await client.get('/')

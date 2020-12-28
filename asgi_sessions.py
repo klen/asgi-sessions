@@ -102,7 +102,6 @@ class SessionMiddleware(BaseMiddeware):
         # Support ASGI-Tools Responses
         response = await self.app(scope, receive, send_wrapper)
         if response and isinstance(response, Response) and not session.pure:
-            response._headers['Set-Cookie'] = session.cookie(
-                self.cookie_name, self.cookie_params)
+            response.headers['Set-Cookie'] = session.cookie(self.cookie_name, self.cookie_params)
 
         return response
