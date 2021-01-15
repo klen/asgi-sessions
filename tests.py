@@ -71,13 +71,13 @@ async def test_asgi_tools_external():
         return 'Hello %s' % user
 
     @app.route('/login/{user}')
-    async def login(request, user='guest'):
+    async def login(request):
         session = request['session']
-        session['user'] = user
+        session['user'] = request.path_params.get('user', 'guest')
         return "Done"
 
     @app.route('/logout')
-    async def logout(request, *args):
+    async def logout(request):
         session = request['session']
         session.pop('user')
         return "Done"
@@ -116,9 +116,9 @@ async def test_asgi_tools_internal():
         return 'Hello %s' % user.title()
 
     @app.route('/login/{user}')
-    async def login(request, user='anonymous'):
+    async def login(request):
         session = request['session']
-        session['user'] = user
+        session['user'] = request.path_params.get('user', 'Anonymous')
         return 'Done'
 
     @app.route('/logout')
