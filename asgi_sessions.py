@@ -1,6 +1,6 @@
 """Support cookie-encrypted sessions for ASGI applications."""
 
-__version__ = "0.2.2"
+__version__ = "0.3.0"
 __license__ = "MIT"
 
 from http import cookies
