@@ -1,7 +1,5 @@
-httpx
-
-tox
 pytest
-pytest-asyncio
+anyio
+trio
 
 -e .

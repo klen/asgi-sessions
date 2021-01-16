@@ -1,8 +1,13 @@
 import pytest
-from httpx import AsyncClient
+from asgi_tools.tests import ASGITestClient
 
 
-pytestmark = pytest.mark.asyncio
+@pytest.fixture(params=[
+    pytest.param('asyncio'),
+    pytest.param('trio'),
+], autouse=True)
+def anyio_backend(request):
+    return request.param
 
 
 def test_session():
@@ -39,23 +44,23 @@ async def test_base():
 
         user = (session.get('user') or 'anonymous').title().encode()
         await send({"type": "http.response.start", "status": status, "headers": headers})
-        await send({"type": "http.response.body", "body": b"Hello %s" % user})
+        await send({"type": "http.response.body", "body": b"Hello %s" % user, "more_body": False})
 
     app = SessionMiddleware(my_app, secret_key="sessions-secret")
+    client = ASGITestClient(app)
 
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
-        res = await client.get('/')
-        assert res.status_code == 200
-        assert res.text == "Hello Anonymous"
+    res = await client.get('/')
+    assert res.status_code == 200
+    assert res.text == "Hello Anonymous"
 
-        res = await client.get('/?tom')
-        assert res.text == "Hello Tom"
+    res = await client.get('/?tom')
+    assert res.text == "Hello Tom"
 
-        res = await client.get('/?mike')
-        assert res.text == "Hello Mike"
+    res = await client.get('/?mike')
+    assert res.text == "Hello Mike"
 
-        res = await client.get('/')
-        assert res.text == "Hello Mike"
+    res = await client.get('/')
+    assert res.text == "Hello Mike"
 
 
 async def test_asgi_tools_external():
@@ -83,23 +88,23 @@ async def test_asgi_tools_external():
         return "Done"
 
     app = SessionMiddleware(app, secret_key='SESSION-SECRET')
+    client = ASGITestClient(app)
 
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
-        res = await client.get('/')
-        assert res.text == "Hello guest"
+    res = await client.get('/')
+    assert res.text == "Hello guest"
 
-        res = await client.get('/login/john')
-        assert res.text == "Done"
-        assert client.cookies['session']
+    res = await client.get('/login/john')
+    assert res.text == "Done"
+    assert client.cookies['session']
 
-        res = await client.get('/')
-        assert res.text == "Hello john"
+    res = await client.get('/')
+    assert res.text == "Hello john"
 
-        res = await client.get('/logout')
-        assert res.text == "Done"
+    res = await client.get('/logout')
+    assert res.text == "Done"
 
-        res = await client.get('/')
-        assert res.text == "Hello guest"
+    res = await client.get('/')
+    assert res.text == "Hello guest"
 
 
 async def test_asgi_tools_internal():
@@ -108,6 +113,7 @@ async def test_asgi_tools_internal():
 
     app = App()
     app.middleware(SessionMiddleware.setup(secret_key='SESSION-SECRET'))
+    client = ASGITestClient(app)
 
     @app.route('/')
     async def index(request):
@@ -127,19 +133,18 @@ async def test_asgi_tools_internal():
         del session['user']
         return 'Done'
 
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
-        res = await client.get('/')
-        assert res.text == "Hello Anonymous"
+    res = await client.get('/')
+    assert res.text == "Hello Anonymous"
 
-        res = await client.get('/login/tom')
-        assert res.text == "Done"
-        assert client.cookies['session']
+    res = await client.get('/login/tom')
+    assert res.text == "Done"
+    assert client.cookies['session']
 
-        res = await client.get('/')
-        assert res.text == "Hello Tom"
+    res = await client.get('/')
+    assert res.text == "Hello Tom"
 
-        res = await client.get('/logout')
-        assert res.text == "Done"
+    res = await client.get('/logout')
+    assert res.text == "Done"
 
-        res = await client.get('/')
-        assert res.text == "Hello Anonymous"
+    res = await client.get('/')
+    assert res.text == "Hello Anonymous"
