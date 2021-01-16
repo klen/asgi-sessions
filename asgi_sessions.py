@@ -57,15 +57,15 @@ class Session(dict):
 
     def clear(self):
         self.pure = not self
-        dict.clear(self)
+        return dict.clear(self)
 
     def pop(self, name, default=None):
         self.pure = not self
-        dict.clear(self)
+        return dict.pop(self, name, default)
 
     def update(self, value):
         self.pure = not value
-        dict.update(self, value)
+        return dict.update(self, value)
 
 
 class SessionMiddleware(BaseMiddeware):

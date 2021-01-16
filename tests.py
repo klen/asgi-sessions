@@ -29,6 +29,10 @@ def test_session():
 
     session = Session('SECRET', 'invalid', uid=12)
     assert session
+    session['data'] = 42
+
+    data = session.pop('data')
+    assert data == 42
 
 
 async def test_base():
