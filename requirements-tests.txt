@@ -1,5 +1,0 @@
-pytest
-anyio
-trio
-
--e .

@@ -2,9 +2,9 @@ VIRTUAL_ENV 	?= env
 
 all: $(VIRTUAL_ENV)
 
-$(VIRTUAL_ENV): $(CURDIR)/requirements-tests.txt $(CURDIR)/requirements.txt
-	@[ -d $(VIRTUAL_ENV) ] || virtualenv --python=python3 $(VIRTUAL_ENV)
-	@$(VIRTUAL_ENV)/bin/pip install -r requirements-tests.txt
+$(VIRTUAL_ENV): setup.cfg
+	@[ -d $(VIRTUAL_ENV) ] || python -m venv $(VIRTUAL_ENV)
+	@$(VIRTUAL_ENV)/bin/pip install -e .[tests,example]
 	@touch $(VIRTUAL_ENV)
 
 VERSION	?= minor
@@ -59,5 +59,4 @@ test t: $(VIRTUAL_ENV)
 
 
 example: $(VIRTUAL_ENV)
-	$(VIRTUAL_ENV)/bin/pip install uvicorn
-	$(VIRTUAL_ENV)/bin/uvicorn --reload example:app
+	$(VIRTUAL_ENV)/bin/uvicorn --reload --port 5000 example:app

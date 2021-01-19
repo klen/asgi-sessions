@@ -121,20 +121,17 @@ async def test_asgi_tools_internal():
 
     @app.route('/')
     async def index(request):
-        session = request['session']
-        user = session.get('user', 'Anonymous')
+        user = request.session.get('user', 'Anonymous')
         return 'Hello %s' % user.title()
 
     @app.route('/login/{user}')
     async def login(request):
-        session = request['session']
-        session['user'] = request.path_params.get('user', 'Anonymous')
+        request.session['user'] = request.path_params.get('user', 'Anonymous')
         return 'Done'
 
     @app.route('/logout')
     async def logout(request, *args):
-        session = request['session']
-        del session['user']
+        del request.session['user']
         return 'Done'
 
     res = await client.get('/')

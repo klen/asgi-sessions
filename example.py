@@ -1,29 +1,26 @@
-from asgi_tools import RedirectResponse, AppMiddleware
+from asgi_tools import ResponseRedirect, App
 from asgi_sessions import SessionMiddleware
 
 
-app = SessionMiddleware(AppMiddleware(), secret_key='SESSION-SECRET')
+app = App()
 
 
 @app.route('/login')
-async def login(request, *args):
+async def login(request):
     data = await request.form()
-    session = request['session']
-    session['user'] = data.get('user')
-    return RedirectResponse('/')
+    request.session['user'] = data.get('user')
+    return ResponseRedirect('/')
 
 
 @app.route('/logout')
-async def logout(scope, *args):
-    session = scope['session']
-    session.pop('user', None)
-    return RedirectResponse('/')
+async def logout(request):
+    request.session.pop('user', None)
+    return ResponseRedirect('/')
 
 
 @app.route('/')
 async def index(request, *args):
-    session = request['session']
-    user = session.get('user')
+    user = request.session.get('user')
     return f"""
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
@@ -37,11 +34,15 @@ async def index(request, *args):
         <form action="/login" method="post">
             <div class="form-group">
                 <label for="user">Login as</label>
-                <input name="user" placeholder="username (enter)" />
+                <input name="user" placeholder="username (enter)"
+                    value="{ user or '' }" { user and 'disabled' } />
             </div>
-            <button class="btn btn-primary" type="submit">Login</button>
+            <button type="submit"
+                class="btn btn-primary" { user and 'disabled'}>Login</button>
             <button onclick="window.location='/logout'" type="button"
                     class="btn btn-danger" { user or 'disabled="disabled"' }">Logout</button>
         </form>
     </div>
 """
+
+app = SessionMiddleware(app, secret_key='SESSION-SECRET')
