@@ -1,6 +1,6 @@
 """Support cookie-encrypted sessions for ASGI applications."""
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"
 __license__ = "MIT"
 
 import typing as t
