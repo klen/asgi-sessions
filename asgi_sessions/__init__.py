@@ -3,17 +3,22 @@
 __version__ = "0.3.2"
 __license__ = "MIT"
 
+import typing as t
 from http import cookies
 
 from asgi_tools import Request, Response
 from asgi_tools.middleware import BaseMiddeware
+from asgi_tools.types import JSONType, ASGIApp, Scope, Receive, Send
 import jwt
+
+
+__all__ = 'Session', 'SessionMiddleware'
 
 
 class Session(dict):
     """Keep/update sessions data."""
 
-    def __init__(self, secret_key, token=None, **payload):
+    def __init__(self, secret_key: str, token: str = None, **payload):
         """Initialize the container."""
         self.secret_key = secret_key
 
@@ -28,17 +33,17 @@ class Session(dict):
 
         self.pure = True
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name: str, value: JSONType):
         """Store the value and check that the session is pure."""
         self.pure = self.get(name) == value
         dict.__setitem__(self, name, value)
 
-    def __delitem__(self, name):
+    def __delitem__(self, name: str):
         """Delete the value and check that the session is pure."""
         self.pure = name not in self
         dict.__delitem__(self, name)
 
-    def encode(self, **kwargs):
+    def encode(self) -> str:
         """Encode the session's data."""
         token = jwt.encode(self, key=self.secret_key, algorithm='HS256')
         # Support JWT<2 (Remove me after 2022-01-01)
@@ -46,24 +51,24 @@ class Session(dict):
             token = token.decode()
         return token
 
-    def cookie(self, cookie_name, cookie_params):
+    def cookie(self, cookie_name: str, cookie_params: t.Dict) -> str:
         """Render the data as a cookie string."""
-        morsel = cookies.Morsel()
+        morsel: cookies.Morsel = cookies.Morsel()
         value = self.encode()
         morsel.set(cookie_name, value, value)
         for k in cookie_params:
             morsel[k] = cookie_params[k]
         return morsel.OutputString()
 
-    def clear(self):
+    def clear(self) -> None:
         self.pure = not self
         return dict.clear(self)
 
-    def pop(self, name, default=None):
+    def pop(self, name: str, default=None) -> JSONType:
         self.pure = not self
         return dict.pop(self, name, default)
 
-    def update(self, value):
+    def update(self, value: t.Dict[str, JSONType]):  # type: ignore
         self.pure = not value
         return dict.update(self, value)
 
@@ -72,15 +77,15 @@ class SessionMiddleware(BaseMiddeware):
     """Support sessions."""
 
     def __init__(
-            self, app, secret_key=None, cookie_name='session', max_age=14 * 24 * 3600,
-            samesite='lax', secure=False, **kwargs):
+            self, app: ASGIApp, secret_key: str = None, cookie_name: str = 'session',
+            max_age: int = 14 * 24 * 3600, samesite: str = 'lax', secure: bool = False):
         """Init the middleware."""
-        super(SessionMiddleware, self).__init__(app, **kwargs)
+        super(SessionMiddleware, self).__init__(app)
         assert secret_key, "secret_key is required"
         self.secret_key = secret_key
         self.cookie_name = cookie_name
 
-        self.cookie_params = {'path': '/'}
+        self.cookie_params: t.Dict[str, t.Any] = {'path': '/'}
         if max_age:
             self.cookie_params['max-age'] = max_age
         if samesite:
@@ -88,7 +93,7 @@ class SessionMiddleware(BaseMiddeware):
         if secure:
             self.cookie_params['secure'] = secure
 
-    async def __process__(self, scope, receive, send):
+    async def __process__(self, scope: t.Union[Scope, Request], receive: Receive, send: Send):
         """Load/save the sessions."""
         # Support asgi_tools.RequestMiddleware
         if isinstance(scope, Request):
