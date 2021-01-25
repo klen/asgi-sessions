@@ -7,8 +7,8 @@ import typing as t
 from http import cookies
 
 from asgi_tools import Request, Response
-from asgi_tools.middleware import BaseMiddeware
-from asgi_tools.types import JSONType, ASGIApp, Scope, Receive, Send
+from asgi_tools.middleware import BaseMiddeware, ASGIApp
+from asgi_tools.types import JSONType, Scope, Receive, Send
 import jwt
 
 

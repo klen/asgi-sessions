@@ -58,5 +58,9 @@ test t: $(VIRTUAL_ENV)
 	$(VIRTUAL_ENV)/bin/pytest tests.py
 
 
+mypy: $(VIRTUAL_ENV)
+	$(VIRTUAL_ENV)/bin/mypy asgi_sessions
+
+
 example: $(VIRTUAL_ENV)
 	$(VIRTUAL_ENV)/bin/uvicorn --reload --port 5000 example:app
