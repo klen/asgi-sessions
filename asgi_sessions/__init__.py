@@ -1,15 +1,15 @@
 """Support cookie-encrypted sessions for ASGI applications."""
-
-__version__ = "0.4.2"
-__license__ = "MIT"
-
 import typing as t
 from http import cookies
 
-from asgi_tools import Request, Response
-from asgi_tools.middleware import BaseMiddeware, ASGIApp
-from asgi_tools.types import JSONType, Scope, Receive, Send
 import jwt
+from asgi_tools import Request, Response
+from asgi_tools._types import JSONType, Scope, Receive, Send
+from asgi_tools.middleware import BaseMiddeware, ASGIApp
+
+
+__version__ = "0.4.2"
+__license__ = "MIT"
 
 
 __all__ = 'Session', 'SessionMiddleware'

@@ -55,16 +55,16 @@ async def test_base():
 
     res = await client.get('/')
     assert res.status_code == 200
-    assert res.text == "Hello Anonymous"
+    assert await res.text() == "Hello Anonymous"
 
     res = await client.get('/?tom')
-    assert res.text == "Hello Tom"
+    assert await res.text() == "Hello Tom"
 
     res = await client.get('/?mike')
-    assert res.text == "Hello Mike"
+    assert await res.text() == "Hello Mike"
 
     res = await client.get('/')
-    assert res.text == "Hello Mike"
+    assert await res.text() == "Hello Mike"
 
 
 async def test_asgi_tools_external():
@@ -95,20 +95,20 @@ async def test_asgi_tools_external():
     client = ASGITestClient(app)
 
     res = await client.get('/')
-    assert res.text == "Hello guest"
+    assert await res.text() == "Hello guest"
 
     res = await client.get('/login/john')
-    assert res.text == "Done"
+    assert await res.text() == "Done"
     assert client.cookies['session']
 
     res = await client.get('/')
-    assert res.text == "Hello john"
+    assert await res.text() == "Hello john"
 
     res = await client.get('/logout')
-    assert res.text == "Done"
+    assert await res.text() == "Done"
 
     res = await client.get('/')
-    assert res.text == "Hello guest"
+    assert await res.text() == "Hello guest"
 
 
 async def test_asgi_tools_internal():
@@ -135,17 +135,17 @@ async def test_asgi_tools_internal():
         return 'Done'
 
     res = await client.get('/')
-    assert res.text == "Hello Anonymous"
+    assert await res.text() == "Hello Anonymous"
 
     res = await client.get('/login/tom')
-    assert res.text == "Done"
+    assert await res.text() == "Done"
     assert client.cookies['session']
 
     res = await client.get('/')
-    assert res.text == "Hello Tom"
+    assert await res.text() == "Hello Tom"
 
     res = await client.get('/logout')
-    assert res.text == "Done"
+    assert await res.text() == "Done"
 
     res = await client.get('/')
-    assert res.text == "Hello Anonymous"
+    assert await res.text() == "Hello Anonymous"
