@@ -1,6 +1,7 @@
 """Support cookie-encrypted sessions for ASGI applications."""
 import typing as t
 from http import cookies
+import sys
 
 import jwt
 from asgi_tools import Request, Response
@@ -88,10 +89,10 @@ class SessionMiddleware(BaseMiddeware):
         self.cookie_params: t.Dict[str, t.Any] = {'path': '/'}
         if max_age:
             self.cookie_params['max-age'] = max_age
-        if samesite:
-            self.cookie_params['samesite'] = samesite
         if secure:
             self.cookie_params['secure'] = secure
+        if sys.version_info >= (3, 8) and samesite:  # XXX: Python 3.7
+            self.cookie_params['samesite'] = samesite
 
     async def __process__(self, scope: t.Union[Scope, Request], receive: Receive, send: Send):
         """Load/save the sessions."""

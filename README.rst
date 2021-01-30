@@ -123,7 +123,7 @@ Options
         # Cookie max age (in seconds) (optional)
         max_age=14 * 24 * 3600,
 
-        # Cookie samesite (optional)
+        # Cookie samesite (optional)  # Python 3.8+ only
         samesite='lax',
 
         # Cookie secure (https only) (optional)
