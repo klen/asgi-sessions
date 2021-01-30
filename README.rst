@@ -15,6 +15,10 @@ ASGI-Sessions
     :target: https://pypi.org/project/asgi-sessions/
     :alt: PYPI Version
 
+.. image:: https://img.shields.io/pypi/pyversions/asgi-sessions
+    :target: https://pypi.org/project/asgi-sessions/
+    :alt: Python Versions
+
 .. _contents:
 
 .. contents::
