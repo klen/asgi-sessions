@@ -3,7 +3,7 @@ ASGI-Sessions
 
 .. _description:
 
-**asgi-sessions** -- Signed Cookie-Based HTTP sessions for ASGI applications (asyncio_ / trio_)
+**asgi-sessions** -- Signed Cookie-Based HTTP sessions for ASGI applications (Asyncio_ / Trio_, / Curio_)
 
 .. _badges:
 
@@ -162,7 +162,8 @@ Licensed under a `MIT license`_.
 .. _links:
 
 .. _MIT license: http://opensource.org/licenses/MIT
-.. _asyncio: https://docs.python.org/3/library/asyncio.html
+.. _Asyncio: https://docs.python.org/3/library/asyncio.html
 .. _klen: https://github.com/klen
-.. _trio: https://trio.readthedocs.io/en/stable/
+.. _Trio: https://trio.readthedocs.io/en/stable/
+.. _Curio: https://curio.readthedocs.io/en/latest/
 
