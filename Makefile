@@ -41,13 +41,6 @@ clean:
 	find $(CURDIR) -name "*.orig" -delete
 	find $(CURDIR)/$(MODULE) -name "__pycache__" | xargs rm -rf
 
-.PHONY: upload
-# target: upload - Upload module on PyPi
-upload: clean
-	@pip install twine wheel
-	@python setup.py bdist_wheel
-	@twine upload dist/*
-
 
 test t: $(VIRTUAL_ENV)
 	$(VIRTUAL_ENV)/bin/pytest tests.py
