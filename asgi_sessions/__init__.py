@@ -9,7 +9,7 @@ from asgi_tools.middleware import BaseMiddeware, ASGIApp
 from asgi_tools.typing import JSONType, Scope, Receive, Send
 
 
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 __license__ = "MIT"
 
 
