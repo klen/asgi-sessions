@@ -5,8 +5,8 @@ import sys
 
 import jwt
 from asgi_tools import Request, Response
-from asgi_tools._types import JSONType, Scope, Receive, Send
 from asgi_tools.middleware import BaseMiddeware, ASGIApp
+from asgi_tools.typing import JSONType, Scope, Receive, Send
 
 
 __version__ = "0.8.1"
