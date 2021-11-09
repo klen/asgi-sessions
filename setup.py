@@ -23,6 +23,8 @@ setup(
     extras_require={
         'tests': parse_requirements('requirements/requirements-tests.txt'),
         'example': parse_requirements('requirements/requirements-example.txt'),
+        'fernet': ['cryptography'],
+        'jwt': ['PyJWT'],
     },
 )
 

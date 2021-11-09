@@ -3,7 +3,7 @@ ASGI-Sessions
 
 .. _description:
 
-**asgi-sessions** -- Signed Cookie-Based HTTP sessions for ASGI applications (Asyncio_ / Trio_, / Curio_)
+**asgi-sessions** -- Cookie-Based HTTP sessions for ASGI applications (Asyncio_ / Trio_, / Curio_)
 
 .. _badges:
 
@@ -23,6 +23,13 @@ ASGI-Sessions
 
 .. contents::
 
+Features
+========
+
+* Supports base64 sessions
+* Supports ``JWT`` signed sessions
+* Supports ``Fernet`` encrypted sessions
+
 .. _requirements:
 
 Requirements
@@ -39,6 +46,12 @@ Installation
 
     pip install asgi-sessions
 
+To install optional ``JWT``, ``Fernet`` support: ::
+
+    pip install asgi-sessions[jwt]
+    pip install asgi-sessions[fernet]
+
+.. _usage:
 
 Usage
 =====
@@ -67,7 +80,7 @@ Common ASGI applications:
         await send({"type": "http.response.start", "status": status, "headers": headers})
         await send({"type": "http.response.body", "body": b"Hello %s" % user})
 
-    app = SessionMiddleware(my_app, secret_key="sessions-secret")
+    app = SessionMiddleware(my_app, session_type='jwt', secret_key="sessions-secret")
 
     # http GET / -> Hello Anonymous
     # http GET /?tom -> Hello Tom
@@ -82,7 +95,7 @@ As ASGI-Tools Internal middleware
     from asgi_sessions import SessionMiddleware
 
     app = App()
-    app.middleware(SessionMiddleware.setup(secret_key='SESSION-SECRET'))
+    app.middleware(SessionMiddleware.setup(session_type='jwt', secret_key='SESSION-SECRET'))
 
     @app.route('/')
     async def index(request):
@@ -118,8 +131,11 @@ Options
         # Your ASGI application
         app,
 
-        # Secret Key for the session (required)
-        secret_key,
+        # Session type (base64|jwt|fernet)
+        session_type="base64",
+
+        # Secret Key for the session (required for JWT/Fernet sessions)
+        secret_key=None,
 
         # Cookie name to keep the session (optional)
         cookie_name='session',

@@ -1,32 +1,78 @@
+import pytest
+
 from asgi_tools.tests import ASGITestClient
+
+
+SECRET = 'SECRET78901234567890123456789012'
 
 
 def test_session():
     from asgi_sessions import Session
 
-    session = Session('SECRET')
-    assert session.pure
+    session = Session()
+    assert not session.modified
+
     session['user'] = 'john'
-    assert not session.pure
+    assert session.modified
 
     token = session.encode()
     assert token
 
-    session = Session('SECRET', token)
+    session = Session(token)
     assert session['user'] == 'john'
-    assert session.pure
+    assert not session.modified
     del session['user']
-    assert not session.pure
+    assert session.modified
 
-    session = Session('SECRET', 'invalid', uid=12)
+    session = Session('invalid', uid=12)
     assert session
+    assert session['uid'] == 12
     session['data'] = 42
 
     data = session.pop('data')
     assert data == 42
 
 
-async def test_base():
+def test_session_jwt():
+    from asgi_sessions import SessionJWT as Session
+
+    session = Session(secret=SECRET)
+    assert not session.modified
+
+    session['user'] = 'john'
+    assert session.modified
+
+    token = session.encode()
+    assert token
+
+    session = Session(token, secret=SECRET)
+    assert session['user'] == 'john'
+    assert not session.modified
+    del session['user']
+    assert session.modified
+
+
+def test_session_fernet():
+    from asgi_sessions import SessionFernet as Session
+
+    session = Session(secret=SECRET)
+    assert not session.modified
+
+    session['user'] = 'john'
+    assert session.modified
+
+    token = session.encode()
+    assert token
+
+    session = Session(token, secret=SECRET)
+    assert session['user'] == 'john'
+    assert not session.modified
+    del session['user']
+    assert session.modified
+
+
+@pytest.mark.parametrize('ses_type', ['jwt', 'fernet', 'base64'])
+async def test_base(ses_type):
     from asgi_sessions import SessionMiddleware
 
     async def my_app(scope, receive, send):
@@ -41,7 +87,7 @@ async def test_base():
         await send({"type": "http.response.start", "status": status, "headers": headers})
         await send({"type": "http.response.body", "body": b"Hello %s" % user, "more_body": False})
 
-    app = SessionMiddleware(my_app, secret_key="sessions-secret")
+    app = SessionMiddleware(my_app, secret_key=SECRET, session_type=ses_type)
     client = ASGITestClient(app)
 
     res = await client.get('/')
@@ -58,7 +104,8 @@ async def test_base():
     assert await res.text() == "Hello Mike"
 
 
-async def test_asgi_tools_external():
+@pytest.mark.parametrize('ses_type', ['jwt', 'fernet', 'base64'])
+async def test_asgi_tools_external(ses_type):
     from asgi_tools import App
     from asgi_sessions import SessionMiddleware
 
@@ -82,7 +129,7 @@ async def test_asgi_tools_external():
         session.pop('user')
         return "Done"
 
-    app = SessionMiddleware(app, secret_key='SESSION-SECRET')
+    app = SessionMiddleware(app, secret_key=SECRET, session_type=ses_type)
     client = ASGITestClient(app)
 
     res = await client.get('/')
@@ -102,12 +149,13 @@ async def test_asgi_tools_external():
     assert await res.text() == "Hello guest"
 
 
-async def test_asgi_tools_internal():
+@pytest.mark.parametrize('ses_type', ['jwt', 'fernet', 'base64'])
+async def test_asgi_tools_internal(ses_type):
     from asgi_tools import App
     from asgi_sessions import SessionMiddleware
 
     app = App()
-    app.middleware(SessionMiddleware.setup(secret_key='SESSION-SECRET'))
+    app.middleware(SessionMiddleware.setup(secret_key=SECRET, session_type=ses_type))
     client = ASGITestClient(app)
 
     @app.route('/')
