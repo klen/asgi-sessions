@@ -14,9 +14,9 @@ from asgi_tools._compat import json_dumps, json_loads
 
 
 try:
-    from cryptography.fernet import Fernet
+    from cryptography.fernet import Fernet, InvalidToken
 except ImportError:
-    Fernet = None  # type: ignore
+    Fernet, InvalidToken = None, None  # type: ignore
 
 
 try:
@@ -206,7 +206,7 @@ class SessionFernet(Session):
         try:
             payload = self.f.decrypt(token.encode())
             return json_loads(payload)
-        except ValueError:
+        except InvalidToken:
             if not silent:
                 raise
 

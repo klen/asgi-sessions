@@ -51,6 +51,14 @@ def test_session_jwt():
     del session['user']
     assert session.modified
 
+    session = Session('invalid', secret=SECRET, uid=12)
+    assert session
+    assert session['uid'] == 12
+    session['data'] = 42
+
+    data = session.pop('data')
+    assert data == 42
+
 
 def test_session_fernet():
     from asgi_sessions import SessionFernet as Session
@@ -69,6 +77,14 @@ def test_session_fernet():
     assert not session.modified
     del session['user']
     assert session.modified
+
+    session = Session('invalid', secret=SECRET, uid=12)
+    assert session
+    assert session['uid'] == 12
+    session['data'] = 42
+
+    data = session.pop('data')
+    assert data == 42
 
 
 @pytest.mark.parametrize('ses_type', ['jwt', 'fernet', 'base64'])
