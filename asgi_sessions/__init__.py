@@ -155,7 +155,7 @@ class SessionJWT(Session):
     """Keep/update sessions data."""
 
     def __init__(self, *args, secret=None, **kwargs):
-        if Fernet is None:
+        if jwt is None:
             raise RuntimeError('Install jwt package to use JWT sessions.')
 
         if not secret:

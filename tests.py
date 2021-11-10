@@ -1,4 +1,5 @@
 import pytest
+from unittest import mock
 
 from asgi_tools.tests import ASGITestClient
 
@@ -33,7 +34,7 @@ def test_session():
     assert data == 42
 
 
-def test_session_jwt():
+def test_session_jwt(monkeypatch):
     from asgi_sessions import SessionJWT as Session
 
     session = Session(secret=SECRET)
@@ -59,8 +60,18 @@ def test_session_jwt():
     data = session.pop('data')
     assert data == 42
 
+    import asgi_sessions
 
-def test_session_fernet():
+    monkeypatch.setattr(asgi_sessions, 'jwt', None)
+
+    with pytest.raises(RuntimeError) as exc:
+        session = Session(token, secret=SECRET)
+
+    assert exc.value.args[0] == 'Install jwt package to use JWT sessions.'
+
+
+
+def test_session_fernet(monkeypatch):
     from asgi_sessions import SessionFernet as Session
 
     session = Session(secret=SECRET)
@@ -85,6 +96,15 @@ def test_session_fernet():
 
     data = session.pop('data')
     assert data == 42
+
+    import asgi_sessions
+
+    monkeypatch.setattr(asgi_sessions, 'Fernet', None)
+
+    with pytest.raises(RuntimeError) as exc:
+        session = Session(token, secret=SECRET)
+
+    assert exc.value.args[0] == 'Install cryptography package to use fernet sessions.'
 
 
 @pytest.mark.parametrize('ses_type', ['jwt', 'fernet', 'base64'])
