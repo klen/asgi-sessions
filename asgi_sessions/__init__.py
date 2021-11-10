@@ -25,7 +25,7 @@ except ImportError:
     jwt = None  # type: ignore
 
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __license__ = "MIT"
 
 
