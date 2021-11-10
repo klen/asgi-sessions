@@ -193,6 +193,10 @@ class SessionFernet(Session):
         if not secret:
             raise ValueError('SessionFernet.secret is required.')
 
+        if len(secret) != 32:
+            secret = secret[:32]
+            secret += '=' * (32 - len(secret) % 32)
+
         self.secret = urlsafe_b64encode(secret.encode())
         self.f = Fernet(self.secret)
         super(SessionFernet, self).__init__(*args, **kwargs)

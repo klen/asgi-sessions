@@ -3,7 +3,7 @@ import pytest
 from asgi_tools.tests import ASGITestClient
 
 
-SECRET = 'SECRET78901234567890123456789012'
+SECRET = 'SECRET-TESTS'
 
 
 def test_session():
