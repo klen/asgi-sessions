@@ -3,25 +3,30 @@
 from __future__ import annotations
 
 import sys
-import typing as t
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from http import cookies
+from typing import Any, Dict, Optional, Union, cast
 
 from asgi_tools import Request, Response
 from asgi_tools._compat import json_dumps, json_loads
-from asgi_tools.middleware import ASGIApp, BaseMiddeware
-from asgi_tools.typing import JSONType, Receive, Scope, Send
+from asgi_tools.middleware import BaseMiddeware
+from asgi_tools.types import TJSON, TASGIApp, TASGIReceive, TASGIScope, TASGISend
+
+Fernet: Any
+InvalidToken: Any
 
 try:
     from cryptography.fernet import Fernet, InvalidToken
 except ImportError:
-    Fernet, InvalidToken = None, None  # type: ignore
+    Fernet, InvalidToken = None, None
 
+
+jwt: Any
 
 try:
     import jwt
 except ImportError:
-    jwt = None  # type: ignore
+    jwt = None
 
 
 __version__ = "1.1.1"
@@ -36,8 +41,8 @@ class SessionMiddleware(BaseMiddeware):
 
     def __init__(
         self,
-        app: ASGIApp,
-        secret_key: str = None,
+        app: TASGIApp,
+        secret_key: Optional[str] = None,
         session_type: str = "base64",
         cookie_name: str = "session",
         max_age: int = 14 * 24 * 3600,
@@ -51,7 +56,7 @@ class SessionMiddleware(BaseMiddeware):
         self.cookie_name = cookie_name
         self.session_type = session_type
 
-        self.cookie_params: t.Dict[str, t.Any] = {"path": "/"}
+        self.cookie_params: Dict[str, Any] = {"path": "/"}
         if max_age:
             self.cookie_params["max-age"] = max_age
         if secure:
@@ -60,14 +65,14 @@ class SessionMiddleware(BaseMiddeware):
             self.cookie_params["samesite"] = samesite
 
     async def __process__(
-        self, scope: t.Union[Scope, Request], receive: Receive, send: Send
+        self, scope: Union[TASGIScope, Request], receive: TASGIReceive, send: TASGISend
     ):
         """Load/save the sessions."""
         # Support asgi_tools.RequestMiddleware
         if isinstance(scope, Request):
             request = scope
         else:
-            request = scope.get("request") or Request(scope)
+            request = scope.get("request") or Request(scope, receive, send)
 
         session = self.init_session(request.cookies.get(self.cookie_name))
         scope["session"] = session
@@ -94,7 +99,7 @@ class SessionMiddleware(BaseMiddeware):
 
         return response
 
-    def init_session(self, token: str = None) -> Session:
+    def init_session(self, token: Optional[str] = None) -> Session:
         if self.session_type == "jwt":
             return SessionJWT(token, secret=self.secret_key)
 
@@ -109,7 +114,7 @@ class Session(dict):
 
     modified = False
 
-    def __init__(self, value: str = None, **payload):
+    def __init__(self, value: Optional[str] = None, **payload):
         """Initialize the container."""
         if value:
             self.update(self.decode(value))
@@ -117,7 +122,7 @@ class Session(dict):
         if payload:
             self.update(payload)
 
-    def __setitem__(self, name: str, value: JSONType):
+    def __setitem__(self, name: str, value: TJSON):
         """Store the value and check that the session is pure."""
         self.modified = self.get(name) != value
         dict.__setitem__(self, name, value)
@@ -127,7 +132,7 @@ class Session(dict):
         self.modified = name in self
         dict.__delitem__(self, name)
 
-    def cookie(self, cookie_name: str, cookie_params: t.Dict) -> str:
+    def cookie(self, cookie_name: str, cookie_params: Dict) -> str:
         """Render the data as a cookie string."""
         morsel: cookies.Morsel = cookies.Morsel()
         value = self.encode()
@@ -140,11 +145,11 @@ class Session(dict):
         self.modified = bool(self)
         return dict.clear(self)
 
-    def pop(self, name: str, default=None) -> JSONType:
+    def pop(self, name: str, default=None) -> TJSON:
         self.modified = bool(self)
         return dict.pop(self, name, default)
 
-    def update(self, value: t.Dict[str, JSONType]):  # type: ignore
+    def update(self, value):
         self.modifield = bool(value)
         return dict.update(self, value)
 
@@ -152,7 +157,7 @@ class Session(dict):
         payload = json_dumps(self)
         return urlsafe_b64encode(payload).decode()
 
-    def decode(self, token: str, silent: bool = True) -> t.Dict:
+    def decode(self, token: str, silent: bool = True) -> Dict:
         try:
             payload = urlsafe_b64decode(token)
             return json_loads(payload)
@@ -183,10 +188,10 @@ class SessionJWT(Session):
             token = token.decode()
         return token
 
-    def decode(self, token, silent=True) -> t.Dict:
+    def decode(self, token, silent=True) -> Dict:
         try:
             payload = jwt.decode(token, key=self.secret, algorithms=["HS256"])
-            return t.cast(t.Dict, payload)
+            return cast(Dict, payload)
         except jwt.DecodeError:
             if not silent:
                 raise
@@ -217,7 +222,7 @@ class SessionFernet(Session):
         payload = json_dumps(self)
         return self.f.encrypt(payload).decode()
 
-    def decode(self, token, silent=True) -> t.Dict:
+    def decode(self, token, silent=True) -> Dict:
         try:
             payload = self.f.decrypt(token.encode())
             return json_loads(payload)
