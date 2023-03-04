@@ -5,12 +5,14 @@ from __future__ import annotations
 import sys
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from http import cookies
-from typing import Any, Dict, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union, cast
 
 from asgi_tools import Request, Response
 from asgi_tools._compat import json_dumps, json_loads
 from asgi_tools.middleware import BaseMiddeware
-from asgi_tools.types import TJSON, TASGIApp, TASGIReceive, TASGIScope, TASGISend
+
+if TYPE_CHECKING:
+    from asgi_tools.types import TJSON, TASGIApp, TASGIReceive, TASGIScope, TASGISend
 
 Fernet: Any
 InvalidToken: Any
@@ -29,10 +31,6 @@ except ImportError:
     jwt = None
 
 
-__version__ = "1.1.2"
-__license__ = "MIT"
-
-
 __all__ = "SessionMiddleware", "Session", "SessionJWT", "SessionFernet"
 
 
@@ -43,6 +41,7 @@ class SessionMiddleware(BaseMiddeware):
         self,
         app: TASGIApp,
         secret_key: Optional[str] = None,
+        *,
         session_type: str = "base64",
         cookie_name: str = "session",
         max_age: int = 14 * 24 * 3600,
@@ -65,7 +64,7 @@ class SessionMiddleware(BaseMiddeware):
             self.cookie_params["samesite"] = samesite
 
     async def __process__(
-        self, scope: Union[TASGIScope, Request], receive: TASGIReceive, send: TASGISend
+        self, scope: Union[TASGIScope, Request], receive: TASGIReceive, send: TASGISend,
     ):
         """Load/save the sessions."""
         # Support asgi_tools.RequestMiddleware
@@ -85,7 +84,7 @@ class SessionMiddleware(BaseMiddeware):
                     (
                         b"Set-Cookie",
                         session.cookie(self.cookie_name, self.cookie_params).encode(),
-                    )
+                    ),
                 )
 
             return send(message)
@@ -94,7 +93,7 @@ class SessionMiddleware(BaseMiddeware):
         response = await self.app(scope, receive, send_wrapper)
         if response and isinstance(response, Response) and session.modified:
             response.headers["Set-Cookie"] = session.cookie(
-                self.cookie_name, self.cookie_params
+                self.cookie_name, self.cookie_params,
             )
 
         return response
@@ -157,14 +156,15 @@ class Session(dict):
         payload = json_dumps(self)
         return urlsafe_b64encode(payload).decode()
 
-    def decode(self, token: str, silent: bool = True) -> Dict:
+    def decode(self, token: str, *, silent: bool = True) -> Dict:
         try:
             payload = urlsafe_b64decode(token)
-            return json_loads(payload)
         except ValueError:
             if silent:
                 return {}
             raise
+        else:
+            return json_loads(payload)
 
 
 class SessionJWT(Session):
@@ -185,10 +185,10 @@ class SessionJWT(Session):
         token = jwt.encode(self, key=self.secret, algorithm="HS256")
         # Support JWT<2 (Remove me after 2022-01-01)
         if isinstance(token, bytes):
-            token = token.decode()
+            return token.decode()
         return token
 
-    def decode(self, token, silent=True) -> Dict:
+    def decode(self, token, *, silent=True) -> Dict:
         try:
             payload = jwt.decode(token, key=self.secret, algorithms=["HS256"])
             return cast(Dict, payload)
@@ -222,7 +222,7 @@ class SessionFernet(Session):
         payload = json_dumps(self)
         return self.f.encrypt(payload).decode()
 
-    def decode(self, token, silent=True) -> Dict:
+    def decode(self, token, *, silent=True) -> Dict:
         try:
             payload = self.f.decrypt(token.encode())
             return json_loads(payload)

@@ -2,9 +2,10 @@ VIRTUAL_ENV 	?= env
 
 all: $(VIRTUAL_ENV)
 
-$(VIRTUAL_ENV): setup.cfg requirements/requirements.txt requirements/requirements-tests.txt
+$(VIRTUAL_ENV): pyproject.toml
 	@[ -d $(VIRTUAL_ENV) ] || python -m venv $(VIRTUAL_ENV)
-	@$(VIRTUAL_ENV)/bin/pip install -e .[tests,example]
+	@$(VIRTUAL_ENV)/bin/pip install -e .[tests,example,dev]
+	@$(VIRTUAL_ENV)/bin/pre-commit install --hook-type pre-push
 	@touch $(VIRTUAL_ENV)
 
 VERSION	?= minor

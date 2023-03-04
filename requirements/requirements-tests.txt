@@ -1,7 +1,0 @@
-cryptography
-PyJWT
-pytest
-pytest-aio[trio,curio]
-pytest-mypy
-types-orjson
-types-ujson

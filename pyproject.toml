@@ -1,0 +1,89 @@
+[project]
+name = "asgi-sessions"
+version = "1.1.2"
+description = "Signed Cookie-Based HTTP sessions for ASGI applications"
+readme = "README.rst"
+requires-python = ">=3.7"
+license = {"text" = "MIT License"}
+authors = [{ name = "Kirill Klenov", email = "horneds@gmail.com" }]
+keywords = ["asyncio", "trio", "asgi", "asgi sessions", "cookies"]
+classifiers = [
+  "Topic :: Software Development :: Internationalization",
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Internet :: WWW/HTTP",
+  "Framework :: AsyncIO",
+  "Framework :: Trio",
+]
+dependencies = [ "asgi-tools >= 0.71.0" ]
+
+[project.urls]
+homepage = "https://github.com/klen/asgi-sessions"
+repository = "https://github.com/klen/asgi-sessions"
+
+[project.optional-dependencies]
+tests = [
+  "cryptography",
+  "PyJWT",
+  "pytest",
+  "pytest-aio[trio,curio]",
+  "pytest-mypy",
+  "types-orjson",
+  "types-ujson",
+  "ruff",
+]
+example = ["uvicorn"]
+dev = [
+  "bump2version", "refurb; python_version >= '3.9'",
+  "tox", "pre-commit"]
+fernet = ["cryptography"]
+jwt = ["PyJWT"]
+
+[tool.setuptools]
+packages = ['asgi_sessions']
+
+[tool.setuptools.package-data]
+asgi_sessions = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-xsv --mypy"
+
+[tool.mypy]
+packages = ["asgi_sessions"]
+ignore_missing_imports = true
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py37,py38,py39,py310,py311,pypy39
+
+[testenv]
+deps = -e .[tests]
+commands =
+        mypy
+	pytest tests.py
+
+[testenv:pypy39]
+deps = -e .[tests]
+commands =
+	pytest tests.py
+"""
+
+[tool.ruff]
+fix = true
+line-length = 100
+target-version = "py38"
+exclude = [".venv", "docs", "examples"]
+select = ["ALL"]
+ignore = ["D", "UP", "ANN", "DJ", "EM", "RSE", "SLF", "TRY", "S101", "PLR2004", "PLR0913"]
+
+[tool.ruff.isort]
+required-imports = ["from __future__ import annotations"]
