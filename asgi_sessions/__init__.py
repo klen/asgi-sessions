@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from http import cookies
 from typing import TYPE_CHECKING, Any, Optional, Union, cast
@@ -60,7 +59,7 @@ class SessionMiddleware(BaseMiddeware):
             self.cookie_params["max-age"] = max_age
         if secure:
             self.cookie_params["secure"] = secure
-        if sys.version_info >= (3, 8) and samesite:  # XXX: Python 3.7
+        if samesite:
             self.cookie_params["samesite"] = samesite
 
     async def __process__(
