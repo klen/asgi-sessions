@@ -167,7 +167,7 @@ class Session(dict):
                 return {}
             raise
         else:
-            return json_loads(payload)
+            return cast(dict, json_loads(payload))
 
 
 class SessionJWT(Session):
@@ -228,7 +228,7 @@ class SessionFernet(Session):
     def decode(self, token, *, silent=True) -> dict:
         try:
             payload = self.f.decrypt(token.encode())
-            return json_loads(payload)
+            return cast(dict, json_loads(payload))
         except InvalidToken:
             if not silent:
                 raise
