@@ -1,6 +1,6 @@
 [project]
 name = "asgi-sessions"
-version = "1.2.0"
+version = "1.2.1"
 description = "Signed Cookie-Based HTTP sessions for ASGI applications"
 readme = "README.rst"
 requires-python = ">=3.9"
