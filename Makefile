@@ -5,7 +5,7 @@ all: $(VIRTUAL_ENV)
 $(VIRTUAL_ENV): pyproject.toml
 	@[ -d $(VIRTUAL_ENV) ] || python -m venv $(VIRTUAL_ENV)
 	@$(VIRTUAL_ENV)/bin/pip install -e .[tests,example,dev]
-	@$(VIRTUAL_ENV)/bin/pre-commit install --hook-type pre-push
+	@$(VIRTUAL_ENV)/bin/pre-commit install
 	@touch $(VIRTUAL_ENV)
 
 VERSION	?= minor
@@ -13,13 +13,15 @@ VERSION	?= minor
 .PHONY: version
 version:
 	pip install bump2version
-	bump2version $(VERSION)
+	git checkout develop
+	git pull
 	git checkout master
 	git pull
 	git merge develop
+	$(VIRTUAL_ENV)/bin/bump2version $(VERSION)
 	git checkout develop
-	git push origin develop master
-	git push --tags
+	git merge master
+	git push --tags origin develop master
 
 .PHONY: minor
 minor:
