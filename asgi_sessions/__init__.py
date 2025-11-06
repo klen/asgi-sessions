@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from http import cookies
-from typing import TYPE_CHECKING, Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from asgi_tools import Request, Response
 from asgi_tools._compat import json_dumps, json_loads
@@ -30,7 +30,7 @@ except ImportError:
     jwt = None
 
 
-__all__ = "SessionMiddleware", "Session", "SessionJWT", "SessionFernet"
+__all__ = "Session", "SessionFernet", "SessionJWT", "SessionMiddleware"
 
 
 class SessionMiddleware(BaseMiddeware):
@@ -39,7 +39,7 @@ class SessionMiddleware(BaseMiddeware):
     def __init__(
         self,
         app: TASGIApp,
-        secret_key: Optional[str] = None,
+        secret_key: str | None = None,
         *,
         session_type: str = "base64",
         cookie_name: str = "session",
@@ -64,7 +64,7 @@ class SessionMiddleware(BaseMiddeware):
 
     async def __process__(
         self,
-        scope: Union[TASGIScope, Request],
+        scope: TASGIScope | Request,
         receive: TASGIReceive,
         send: TASGISend,
     ):
@@ -101,7 +101,7 @@ class SessionMiddleware(BaseMiddeware):
 
         return response
 
-    def init_session(self, token: Optional[str] = None) -> Session:
+    def init_session(self, token: str | None = None) -> Session:
         if self.session_type == "jwt":
             return SessionJWT(token, secret=self.secret_key)
 
@@ -116,7 +116,7 @@ class Session(dict):
 
     modified = False
 
-    def __init__(self, value: Optional[str] = None, **payload):
+    def __init__(self, value: str | None = None, **payload):
         """Initialize the container."""
         if value:
             self.update(self.decode(value))
@@ -134,13 +134,13 @@ class Session(dict):
         self.modified = name in self
         dict.__delitem__(self, name)
 
-    def cookie(self, cookie_name: str, cookie_params: dict) -> str:
+    def cookie(self, cookie_name: str, cookie_params: dict[str, Any]) -> str:
         """Render the data as a cookie string."""
         morsel: cookies.Morsel = cookies.Morsel()
         value = self.encode()
         morsel.set(cookie_name, value, value)
-        for k in cookie_params:
-            morsel[k] = cookie_params[k]
+        for k, v in cookie_params.items():
+            morsel[k] = v
         return morsel.OutputString()
 
     def clear(self) -> None:
@@ -167,7 +167,7 @@ class Session(dict):
                 return {}
             raise
         else:
-            return cast(dict, json_loads(payload))
+            return cast("dict", json_loads(payload))
 
 
 class SessionJWT(Session):
@@ -194,7 +194,7 @@ class SessionJWT(Session):
     def decode(self, token, *, silent=True) -> dict:
         try:
             payload = jwt.decode(token, key=self.secret, algorithms=["HS256"])
-            return cast(dict, payload)
+            return cast("dict", payload)
         except jwt.DecodeError:
             if not silent:
                 raise
@@ -228,7 +228,7 @@ class SessionFernet(Session):
     def decode(self, token, *, silent=True) -> dict:
         try:
             payload = self.f.decrypt(token.encode())
-            return cast(dict, json_loads(payload))
+            return cast("dict", json_loads(payload))
         except InvalidToken:
             if not silent:
                 raise

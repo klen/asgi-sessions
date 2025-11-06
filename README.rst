@@ -35,7 +35,7 @@ Features
 Requirements
 =============
 
-- python >= 3.9
+- python >= 3.10
 
 .. _installation:
 
@@ -182,4 +182,3 @@ Licensed under a `MIT license`_.
 .. _klen: https://github.com/klen
 .. _Trio: https://trio.readthedocs.io/en/stable/
 .. _Curio: https://curio.readthedocs.io/en/latest/
-
